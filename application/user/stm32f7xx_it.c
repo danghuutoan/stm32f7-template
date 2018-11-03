@@ -38,7 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_it.h"
-
+#include "cmsis_os.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -128,8 +128,9 @@ void DebugMon_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  // osSystickHandler();
-  HAL_IncTick();
+  // printf("dsfdfsd\r\n");
+  osSystickHandler();
+  // HAL_IncTick();
 }
 
 /******************************************************************************/

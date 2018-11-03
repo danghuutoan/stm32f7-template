@@ -1,10 +1,11 @@
 #include "main.h"
-
+// #include "queue.h"
+#include "cmsis_os.h"
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 
 static void SystemClock_Config(void);
 static void Error_Handler(void);
-
+static void StartThread(void const *argument);
 static void CPU_CACHE_Enable(void);
 
 /* UART handler declaration */
@@ -13,6 +14,7 @@ __IO ITStatus UartReady = RESET;
 
 int main (void)
 {
+	osThreadId threadId = NULL;
 	/* Enable the CPU Cache */
 	CPU_CACHE_Enable();
 
@@ -50,21 +52,31 @@ int main (void)
 	BSP_COM_Init(COM1, &UartHandle);
 
 	printf("hello World\n");
+
+	 /*##-1- Start task #########################################################*/
+	osThreadDef(uSDThread, StartThread, osPriorityNormal, 0, 1024);
+	threadId = osThreadCreate(osThread(uSDThread), NULL);
+	if(threadId == NULL) {
+		printf(" failed to create thread \r\n");
+	}
+	/*##-2- Start scheduler ####################################################*/
+	osKernelStart();
 	while (1)
 	{
-		BSP_LED_On(LED1); 
-		HAL_Delay(100);
-		BSP_LED_Off(LED1); 
-		HAL_Delay(100);
-		BSP_LED_On(LED1); 
-		HAL_Delay(100);
-		BSP_LED_Off(LED1); 
-		HAL_Delay(500);
+
 	}
 
 	return 0;
 }
 
+static void StartThread(void const *argument)
+{
+	for(;;){
+		// BSP_LED_Toggle(LED1); 
+		osDelay(1000);
+		printf("tick\r\n");
+	}
+}
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 
@@ -140,7 +152,7 @@ static void Error_Handler(void)
   while(1)
   {
     BSP_LED_Toggle(LED1);
-    HAL_Delay(200);
+    // HAL_Delay(200);
   }
 }
 
@@ -190,4 +202,10 @@ PUTCHAR_PROTOTYPE
   HAL_UART_Transmit(&UartHandle, (uint8_t *)&ch, 1, 0xFFFF);
 
   return ch;
+}
+
+void vApplicationMallocFailedHook( void )
+{
+	printf("%vApplicationMallocFailedHook \r\n" );
+	while(1);
 }

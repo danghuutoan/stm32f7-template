@@ -8,7 +8,7 @@ BINNAME = $(current_dir)
 -include middlewares/subdir.mk
 
 OUTPUT_DIR = output
-$(info    BINNAME is $(BINNAME))
+# $(info    BINNAME is $(BINNAME))
 
 TOOLCHAIN_DIR = /Users/toan/study/stm32/gcc-arm-none-eabi-7-2018-q2-update/bin
 CC = $(TOOLCHAIN_DIR)/arm-none-eabi-gcc
@@ -23,13 +23,7 @@ C_SRCS += $(DRIVER_SRCS) $(MIDDLEWARE_SRCS) $(APP_SRCS)
 
 INC = $(addprefix -I, $(addprefix $(ROOT_DIR)/, $(DRIVER_INC) $(MIDDLEWARE_INC) $(APP_INC)))
 
-S_SRCS += $(DRIVER_DIR)/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s
-S_OBJS = $(addsuffix .o, $(basename $(S_SRCS)))
-S_DEPS = $(addsuffix .d, $(basename $(S_SRCS)))
-
-
-
-OBJS += $(addprefix $(OUTPUT_DIR)/, $(APP_OBJS) $(S_OBJS) $(DRIVER_OBJS) $(MIDDLEWARE_OBJS))
+OBJS += $(addprefix $(OUTPUT_DIR)/, $(S_OBJS) $(APP_OBJS) $(DRIVER_OBJS) $(MIDDLEWARE_OBJS))
 DEPS += $(addsuffix .d, $(basename $(OBJS)))
 
 LINKER_SRC = $(ROOT_DIR)/$(APP_DIR)/gcc/STM32F746NGHx_FLASH.ld
@@ -42,34 +36,25 @@ LDFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -specs=nosy
 
 $(OUTPUT_DIR)/%.o: %.c
 	@mkdir -p $(@D)
-	echo 'Building file: $<'
-	echo 'Invoking: Cross GCC Compiler'
-	$(CC) $(CFLAGS) $(DEFS) $(INC) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
+	@$(CC) $(CFLAGS) $(DEFS) $(INC) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
+	@echo "CC ${@}"
+
 
 $(OUTPUT_DIR)/%.o: %.s
 	@mkdir -p $(@D)
-	@echo 'Building file: $<'
-	@echo 'Invoking: MCU GCC Assembler'
-	$(AS) $(ASFLAGS) $(INC) -g -o "$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
+	@$(AS) $(ASFLAGS) $(INC) -g -o "$@" "$<"
+	@echo "AS $@"
 
-# $(info    INC is $(INC))
 # All Target
 all: $(BINNAME).elf
 
-$(info    OBJS is $(OBJS))
 # Tool invocations
 $(BINNAME).elf: $(OBJS)
 	@mkdir -p $(OUTPUT_DIR)
-	@echo 'Building target: $@'
-	@echo 'Invoking: MCU GCC Linker'
-	$(CC)  $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
+	@$(CC)  $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	@echo "CC $@"
 	@echo ' '
-	$(MAKE) --no-print-directory post-build
+	@$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
@@ -80,7 +65,8 @@ flash:
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
-	-$(CP) -O binary $(BINNAME).elf $(BINNAME).bin && $(SZ) $(BINNAME).elf
+	-$(CP) -O binary $(BINNAME).elf $(BINNAME).bin
+	@$(SZ) $(BINNAME).elf
 	-@echo ' '
 
 .PHONY: all clean dependents
