@@ -1,10 +1,12 @@
 
--include application/subdir.mk
--include drivers/subdir.mk
-
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 BINNAME = $(current_dir)
+
+-include application/subdir.mk
+-include drivers/subdir.mk
+-include middlewares/subdir.mk
+
 OUTPUT_DIR = output
 $(info    BINNAME is $(BINNAME))
 
@@ -73,6 +75,8 @@ $(BINNAME).elf: $(OBJS)
 clean:
 	-$(RM) -rf $(OUTPUT_DIR) $(BINNAME).*
 	-@echo ' '
+flash:
+	@st-flash write $(BINNAME).bin 0x8000000
 
 post-build:
 	-@echo 'Generating binary and Printing size information:'
