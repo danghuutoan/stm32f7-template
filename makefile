@@ -1,4 +1,7 @@
 
+-include application/subdir.mk
+-include drivers/subdir.mk
+
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 BINNAME = $(current_dir)
@@ -13,48 +16,6 @@ SZ = $(TOOLCHAIN_DIR)/arm-none-eabi-size
 # makefile is in the root directory
 ROOT_DIR = $(shell echo `pwd`)
 # $(info    ROOT_DIR is $(ROOT_DIR))
-
-# DRIVER
-DRIVER_DIR = drivers
-CMSIS_SRCS+= CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
-
-CMSIS_INC += CMSIS/Include \
-			CMSIS/Device/ST/STM32F7xx/Include
-HAL_SRCS +=
-HAL_INCS += STM32F7xx_HAL_Driver/Inc 
-
-DRIVER_INC = $(addprefix $(DRIVER_DIR)/, $(CMSIS_INC) $(HAL_INCS)) 
-DRIVER_SRCS = $(addprefix $(DRIVER_DIR)/, $(CMSIS_SRCS))
-DRIVER_OBJS = $(addsuffix .o, $(basename $(DRIVER_SRCS)))
-
-$(info    DRIVER_SRCS is $(DRIVER_SRCS))
-$(info    DRIVER_OBJS is $(DRIVER_OBJS))
-# MIDDLEWARE
-MIDDLEWARE_DIR = middlewares
-FreeRTOS_SRCS += FreeRTOS/Source/croutine.c \
-					FreeRTOS/Source/list.c \
-					FreeRTOS/Source/queue.c \
-					FreeRTOS/Source/tasks.c \
-					FreeRTOS/Source/timers.c \
-					FreeRTOS/Source/portable/MemMang/heap_4.c \
-					FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/port.c \
-					FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
-FreeRTOS_INC += FreeRTOS/Source/CMSIS_RTOS \
-				FreeRTOS/Source/include \
-				FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1
-
-MIDDLEWARE_INC = $(addprefix $(MIDDLEWARE_DIR)/, $(FreeRTOS_INC))
-MIDDLEWARE_SRCS = $(addprefix $(MIDDLEWARE_DIR)/, $(FreeRTOS_SRCS))
-MIDDLEWARE_OBJS = $(addsuffix .o, $(basename $(MIDDLEWARE_SRCS)))
-
-# $(info    MIDDLEWARE_SRCS is $(MIDDLEWARE_SRCS))
-# $(info    MIDDLEWARE_OBJS is $(MIDDLEWARE_OBJS))
-
-# APPLICATION
-APP_DIR = application
-APP_SRCS += $(APP_DIR)/user/main.c
-APP_OBJS = $(addsuffix .o, $(basename $(APP_SRCS)))
-APP_INC = $(APP_DIR)/inc
 
 C_SRCS += $(DRIVER_SRCS) $(MIDDLEWARE_SRCS) $(APP_SRCS)
 
