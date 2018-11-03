@@ -52,9 +52,9 @@ MIDDLEWARE_OBJS = $(addsuffix .o, $(basename $(MIDDLEWARE_SRCS)))
 
 # APPLICATION
 APP_DIR = application
-APP_SRCS += $(APP_DIR)/main.c
+APP_SRCS += $(APP_DIR)/user/main.c
 APP_OBJS = $(addsuffix .o, $(basename $(APP_SRCS)))
-APP_INC = $(APP_DIR)/
+APP_INC = $(APP_DIR)/inc
 
 C_SRCS += $(DRIVER_SRCS) $(MIDDLEWARE_SRCS) $(APP_SRCS)
 
@@ -69,10 +69,11 @@ S_DEPS = $(addsuffix .d, $(basename $(S_SRCS)))
 OBJS += $(addprefix $(OUTPUT_DIR)/, $(APP_OBJS) $(S_OBJS) $(DRIVER_OBJS) $(MIDDLEWARE_OBJS))
 DEPS += $(addsuffix .d, $(basename $(OBJS)))
 
-LINKER_SRC = $(ROOT_DIR)/$(APP_DIR)/STM32F746NGHx_FLASH.ld
+LINKER_SRC = $(ROOT_DIR)/$(APP_DIR)/gcc/STM32F746NGHx_FLASH.ld
 DEFS = -DUSE_HAL_DRIVER -DSTM32F746xx -DUSE_STM32746G_DISCOVERY
-CFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
+
 ASFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16
+CFLAGS = $(ASFLAGS) -Os -g3 -fmessage-length=0 -ffunction-sections -c -fmessage-length=0
 LDFLAGS = -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-sp-d16 -specs=nosys.specs -specs=nano.specs -T$(LINKER_SRC) -Wl,-Map=$(OUTPUT_DIR)/output.map -Wl,--gc-sections -lm
 # Each subdirectory must supply rules for building sources it contributes
 
@@ -80,7 +81,7 @@ $(OUTPUT_DIR)/%.o: %.c
 	@mkdir -p $(@D)
 	echo 'Building file: $<'
 	echo 'Invoking: Cross GCC Compiler'
-	$(CC) $(CFLAGS) $(DEFS) $(INC) -Os -g3 -fmessage-length=0 -ffunction-sections -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
+	$(CC) $(CFLAGS) $(DEFS) $(INC) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
