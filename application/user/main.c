@@ -1,5 +1,5 @@
 #include "main.h"
-
+#include <string.h>
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 
 static void SystemClock_Config(void);
@@ -10,59 +10,187 @@ static void CPU_CACHE_Enable(void);
 /* UART handler declaration */
 UART_HandleTypeDef UartHandle;
 __IO ITStatus UartReady = RESET;
+extern uint16_t AUDIO_SAMPLE[];
+char test_buffer [1024];
+#define AUDIO_FILE_SZE          990000
+#define AUIDO_START_ADDRESS     58 /* Offset relative to audio file header size */
+
+AUDIO_PLAYBACK_StateTypeDef AudioState = AUDIO_STATE_IDLE;
+static AUDIO_OUT_BufferTypeDef  BufferCtl;
+void hexDump (char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    // Output description if given.
+    if (desc != NULL)
+        printf ("%s:\r\n", desc);
+
+    if (len == 0) {
+        printf("  ZERO LENGTH\r\n");
+        return;
+    }
+    if (len < 0) {
+        printf("  NEGATIVE LENGTH: %i\r\n",len);
+        return;
+    }
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                printf ("  %s\r\n", buff);
+
+            // Output the offset.
+            printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+
+    // Pad out last line if not exactly 16 characters.
+    while ((i % 16) != 0) {
+        printf ("   ");
+        i++;
+    }
+
+    // And print the final ASCII bit.
+    printf ("  %s\r\n", buff);
+}
+int copy_sample(uint8_t *buffer, uint32_t copy_size)
+{
+    int retval = 0;
+    static uint32_t bytesread = 0;
+    static uint32_t bytesleft = AUDIO_FILE_SZE - AUIDO_START_ADDRESS;
+    if(copy_size < bytesleft){
+        printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , copy_size);
+        memcpy(buffer, (uint8_t *)&AUDIO_SAMPLE[AUIDO_START_ADDRESS + bytesread], copy_size);
+        bytesread += copy_size;
+        bytesleft -= copy_size;
+        retval = copy_size;
+    }else {
+        printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , bytesleft);
+        memcpy(buffer, (uint8_t *)&AUDIO_SAMPLE[AUIDO_START_ADDRESS + bytesread], bytesleft);
+        bytesread += bytesleft;
+        bytesleft -= bytesleft;
+        retval = bytesleft;
+    }
+
+    // printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , bytesread);
+    return retval;
+}
 
 int main (void)
 {
-	/* Enable the CPU Cache */
-	CPU_CACHE_Enable();
+    WAVE_FormatTypeDef *header = (WAVE_FormatTypeDef *)AUDIO_SAMPLE;
+    uint8_t *audio_ptr = (uint8_t *)(AUDIO_SAMPLE) + AUIDO_START_ADDRESS;
+    uint32_t read;
+    /* Enable the CPU Cache */
+    CPU_CACHE_Enable();
 
-	/* STM32F7xx HAL library initialization:
-	   - Configure the Flash ART accelerator on ITCM interface
-	   - Configure the Systick to generate an interrupt each 1 msec
-	   - Set NVIC Group Priority to 4
-	   - Global MSP (MCU Support Package) initialization
-	 */
-	HAL_Init();
+    /* STM32F7xx HAL library initialization:
+       - Configure the Flash ART accelerator on ITCM interface
+       - Configure the Systick to generate an interrupt each 1 msec
+       - Set NVIC Group Priority to 4
+       - Global MSP (MCU Support Package) initialization
+     */
+    HAL_Init();
 
-	/* Configure the system clock to 216 MHz */
-	SystemClock_Config();
+    /* Configure the system clock to 216 MHz */
+    SystemClock_Config();
 
-	/* Configure LED1 */
-  	BSP_LED_Init(LED1);
-	/*##-1- Configure the UART peripheral ######################################*/
-	/* Put the USART peripheral in the Asynchronous mode (UART Mode) */
-	/* UART configured as follows:
+    /* Configure LED1 */
+    BSP_LED_Init(LED1);
+    /*##-1- Configure the UART peripheral ######################################*/
+    /* Put the USART peripheral in the Asynchronous mode (UART Mode) */
+    /* UART configured as follows:
       - Word Length = 8 Bits
       - Stop Bit = One Stop bit
       - Parity = None
-      - BaudRate = 9600 baud
+      - BaudRate = 115200 baud
       - Hardware flow control disabled (RTS and CTS signals) */
-	// UartHandle.Instance        = USARTx;
+    // UartHandle.Instance        = USARTx;
 
-	UartHandle.Init.BaudRate   = 115200;
-	UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-	UartHandle.Init.StopBits   = UART_STOPBITS_1;
-	UartHandle.Init.Parity     = UART_PARITY_NONE;
-	UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
-	UartHandle.Init.Mode       = UART_MODE_TX_RX;
-	UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    UartHandle.Init.BaudRate   = 115200;
+    UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
+    UartHandle.Init.StopBits   = UART_STOPBITS_1;
+    UartHandle.Init.Parity     = UART_PARITY_NONE;
+    UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+    UartHandle.Init.Mode       = UART_MODE_TX_RX;
+    UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-	BSP_COM_Init(COM1, &UartHandle);
+    BSP_COM_Init(COM1, &UartHandle);
+    if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 70, AUDIO_FREQUENCY_48K) != 0)
+    {
+        printf("init audio failed\r\n");
+    }
+    printf("sample rate = %d \r\n", header->SampleRate);
+    hexDump("file header", AUDIO_SAMPLE, 58);
+    BufferCtl.state = BUFFER_OFFSET_NONE;
+    memcpy(&BufferCtl.buff[0], audio_ptr, AUDIO_OUT_BUFFER_SIZE);
+    AudioState = AUDIO_STATE_PLAY;
+    BufferCtl.fptr = AUDIO_OUT_BUFFER_SIZE;
 
-	printf("hello World\n");
-	while (1)
-	{
-		BSP_LED_On(LED1); 
-		HAL_Delay(100);
-		BSP_LED_Off(LED1); 
-		HAL_Delay(100);
-		BSP_LED_On(LED1); 
-		HAL_Delay(100);
-		BSP_LED_Off(LED1); 
-		HAL_Delay(500);
-	}
+    // BSP_AUDIO_OUT_SetFrequency(header->SampleRate);
+    BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+    BSP_AUDIO_OUT_Play((uint16_t*)&BufferCtl.buff[0], AUDIO_OUT_BUFFER_SIZE);
+    printf("systemcore clock: %d\n", SystemCoreClock);
 
-	return 0;
+    while (1)
+    {
+        if(BufferCtl.state == BUFFER_OFFSET_HALF)
+        {
+            memcpy(&BufferCtl.buff[0], (audio_ptr + BufferCtl.fptr), AUDIO_OUT_BUFFER_SIZE/ 2);
+            BufferCtl.state = BUFFER_OFFSET_NONE;
+            BufferCtl.fptr += AUDIO_OUT_BUFFER_SIZE/ 2; 
+        }
+        
+        if(BufferCtl.state == BUFFER_OFFSET_FULL)
+        { 
+            memcpy(&BufferCtl.buff[AUDIO_OUT_BUFFER_SIZE /2], (audio_ptr + BufferCtl.fptr), AUDIO_OUT_BUFFER_SIZE/ 2);
+            BufferCtl.state = BUFFER_OFFSET_NONE;
+            BufferCtl.fptr += AUDIO_OUT_BUFFER_SIZE/ 2; 
+        }
+    }
+    return 0;
+}
+
+
+/**
+  * @brief  Calculates the remaining file size and new position of the pointer.
+  * @param  None
+  * @retval None
+  */
+void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
+{
+  if(AudioState == AUDIO_STATE_PLAY)
+  {
+    BufferCtl.state = BUFFER_OFFSET_FULL;
+  }
+}
+
+/**
+  * @brief  Manages the DMA Half Transfer complete interrupt.
+  * @param  None
+  * @retval None
+  */
+void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
+{ 
+  if(AudioState == AUDIO_STATE_PLAY)
+  {
+    BufferCtl.state = BUFFER_OFFSET_HALF;
+  }
 }
 
 /**
@@ -97,35 +225,35 @@ static void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 25;
-  RCC_OscInitStruct.PLL.PLLN = 432;
+  RCC_OscInitStruct.PLL.PLLN = 432;  
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 9;
-
+  
   ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
   if(ret != HAL_OK)
   {
     while(1) { ; }
   }
-
-  /* Activate the OverDrive to reach the 216 MHz Frequency */
+  
+  /* Activate the OverDrive to reach the 216 MHz Frequency */  
   ret = HAL_PWREx_EnableOverDrive();
   if(ret != HAL_OK)
   {
     while(1) { ; }
   }
-
+  
   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
   RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2; 
+  
   ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7);
   if(ret != HAL_OK)
   {
     while(1) { ; }
-  }
+  }  
 }
 
 /**

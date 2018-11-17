@@ -8,17 +8,27 @@ CMSIS_INC += CMSIS/Include \
 			CMSIS/Device/ST/STM32F7xx/Include
 
 HAL_SRC_DIR = STM32F7xx_HAL_Driver/Src
+
 HAL_SRCS += $(HAL_SRC_DIR)/stm32f7xx_hal.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_cortex.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_dma.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_gpio.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_rcc.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_uart.c \
-			$(HAL_SRC_DIR)/stm32f7xx_hal_pwr_ex.c
+			$(HAL_SRC_DIR)/stm32f7xx_hal_pwr_ex.c \
+			$(HAL_SRC_DIR)/stm32f7xx_hal_rcc_ex.c \
+			$(HAL_SRC_DIR)/stm32f7xx_hal_i2c.c \
+			$(HAL_SRC_DIR)/stm32f7xx_hal_sai.c 
 
-BSP_INC = BSP/STM32746G-Discovery
-BSP_SRCS = BSP/STM32746G-Discovery/stm32746g_discovery.c
+BSP_INC = BSP/STM32746G-Discovery \
+			BSP/Components/wm8994
+
+BSP_SRCS = BSP/STM32746G-Discovery/stm32746g_discovery.c \
+			BSP/STM32746G-Discovery/stm32746g_discovery_audio.c \
+			BSP/Components/wm8994/wm8994.c
+
 HAL_INCS += STM32F7xx_HAL_Driver/Inc 
+
 
 DRIVER_INC = $(addprefix $(DRIVER_DIR)/, $(CMSIS_INC) $(HAL_INCS) $(BSP_INC))
 DRIVER_SRCS = $(addprefix $(DRIVER_DIR)/, $(CMSIS_SRCS) $(BSP_SRCS) $(HAL_SRCS))
