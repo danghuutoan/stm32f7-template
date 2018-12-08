@@ -128,8 +128,9 @@ void DebugMon_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  // osSystickHandler();
-  HAL_IncTick();
+  // printf("dsfdfsd\r\n");
+  osSystickHandler();
+  // HAL_IncTick();
 }
 
 /******************************************************************************/
