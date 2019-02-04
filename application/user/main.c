@@ -1,5 +1,6 @@
 #include "main.h"
 #include <string.h>
+#include "music_player.h"
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 
 static void SystemClock_Config(void);
@@ -10,13 +11,7 @@ static void CPU_CACHE_Enable(void);
 /* UART handler declaration */
 UART_HandleTypeDef UartHandle;
 __IO ITStatus UartReady = RESET;
-extern uint16_t AUDIO_SAMPLE[];
-char test_buffer [1024];
-#define AUDIO_FILE_SZE          990000
-#define AUIDO_START_ADDRESS     58 /* Offset relative to audio file header size */
 
-AUDIO_PLAYBACK_StateTypeDef AudioState = AUDIO_STATE_IDLE;
-static AUDIO_OUT_BufferTypeDef  BufferCtl;
 void hexDump (char *desc, void *addr, int len) {
     int i;
     unsigned char buff[17];
@@ -68,33 +63,11 @@ void hexDump (char *desc, void *addr, int len) {
     // And print the final ASCII bit.
     printf ("  %s\r\n", buff);
 }
-int copy_sample(uint8_t *buffer, uint32_t copy_size)
-{
-    int retval = 0;
-    static uint32_t bytesread = 0;
-    static uint32_t bytesleft = AUDIO_FILE_SZE - AUIDO_START_ADDRESS;
-    if(copy_size < bytesleft){
-        printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , copy_size);
-        memcpy(buffer, (uint8_t *)&AUDIO_SAMPLE[AUIDO_START_ADDRESS + bytesread], copy_size);
-        bytesread += copy_size;
-        bytesleft -= copy_size;
-        retval = copy_size;
-    }else {
-        printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , bytesleft);
-        memcpy(buffer, (uint8_t *)&AUDIO_SAMPLE[AUIDO_START_ADDRESS + bytesread], bytesleft);
-        bytesread += bytesleft;
-        bytesleft -= bytesleft;
-        retval = bytesleft;
-    }
 
-    // printf("%s:%d read %d\r\n", __FUNCTION__, __LINE__ , bytesread);
-    return retval;
-}
 
 int main (void)
 {
-    WAVE_FormatTypeDef *header = (WAVE_FormatTypeDef *)AUDIO_SAMPLE;
-    uint8_t *audio_ptr = (uint8_t *)(AUDIO_SAMPLE) + AUIDO_START_ADDRESS;
+
     uint32_t read;
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
@@ -131,67 +104,17 @@ int main (void)
     UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
     BSP_COM_Init(COM1, &UartHandle);
-    if (BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 70, AUDIO_FREQUENCY_48K) != 0)
-    {
-        printf("init audio failed\r\n");
-    }
-    printf("sample rate = %d \r\n", header->SampleRate);
-    hexDump("file header", AUDIO_SAMPLE, 58);
-    BufferCtl.state = BUFFER_OFFSET_NONE;
-    memcpy(&BufferCtl.buff[0], audio_ptr, AUDIO_OUT_BUFFER_SIZE);
-    AudioState = AUDIO_STATE_PLAY;
-    BufferCtl.fptr = AUDIO_OUT_BUFFER_SIZE;
-
-    // BSP_AUDIO_OUT_SetFrequency(header->SampleRate);
-    BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
-    BSP_AUDIO_OUT_Play((uint16_t*)&BufferCtl.buff[0], AUDIO_OUT_BUFFER_SIZE);
+    music_player_init();
+    music_player_play();
     printf("systemcore clock: %d\n", SystemCoreClock);
 
     while (1)
     {
-        if(BufferCtl.state == BUFFER_OFFSET_HALF)
-        {
-            memcpy(&BufferCtl.buff[0], (audio_ptr + BufferCtl.fptr), AUDIO_OUT_BUFFER_SIZE/ 2);
-            BufferCtl.state = BUFFER_OFFSET_NONE;
-            BufferCtl.fptr += AUDIO_OUT_BUFFER_SIZE/ 2; 
-        }
-        
-        if(BufferCtl.state == BUFFER_OFFSET_FULL)
-        { 
-            memcpy(&BufferCtl.buff[AUDIO_OUT_BUFFER_SIZE /2], (audio_ptr + BufferCtl.fptr), AUDIO_OUT_BUFFER_SIZE/ 2);
-            BufferCtl.state = BUFFER_OFFSET_NONE;
-            BufferCtl.fptr += AUDIO_OUT_BUFFER_SIZE/ 2; 
-        }
+        music_player_process();
     }
     return 0;
 }
 
-
-/**
-  * @brief  Calculates the remaining file size and new position of the pointer.
-  * @param  None
-  * @retval None
-  */
-void BSP_AUDIO_OUT_TransferComplete_CallBack(void)
-{
-  if(AudioState == AUDIO_STATE_PLAY)
-  {
-    BufferCtl.state = BUFFER_OFFSET_FULL;
-  }
-}
-
-/**
-  * @brief  Manages the DMA Half Transfer complete interrupt.
-  * @param  None
-  * @retval None
-  */
-void BSP_AUDIO_OUT_HalfTransfer_CallBack(void)
-{ 
-  if(AudioState == AUDIO_STATE_PLAY)
-  {
-    BufferCtl.state = BUFFER_OFFSET_HALF;
-  }
-}
 
 /**
   * @brief  System Clock Configuration
