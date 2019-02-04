@@ -23,6 +23,7 @@ void music_player_init(void)
 
 void music_player_play(void)
 {
+    // load the first audio frame
     memcpy(&BufferCtl.buff[0], audio_ptr, AUDIO_OUT_BUFFER_SIZE);
     AudioState = AUDIO_STATE_PLAY;
     BufferCtl.fptr = AUDIO_OUT_BUFFER_SIZE;
