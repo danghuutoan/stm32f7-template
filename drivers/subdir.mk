@@ -18,13 +18,16 @@ HAL_SRCS += $(HAL_SRC_DIR)/stm32f7xx_hal.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_pwr_ex.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_rcc_ex.c \
 			$(HAL_SRC_DIR)/stm32f7xx_hal_i2c.c \
-			$(HAL_SRC_DIR)/stm32f7xx_hal_sai.c 
+			$(HAL_SRC_DIR)/stm32f7xx_hal_sai.c \
+			$(HAL_SRC_DIR)/stm32f7xx_hal_sd.c \
+			$(HAL_SRC_DIR)/stm32f7xx_ll_sdmmc.c
 
 BSP_INC = BSP/STM32746G-Discovery \
 			BSP/Components/wm8994
 
 BSP_SRCS = BSP/STM32746G-Discovery/stm32746g_discovery.c \
 			BSP/STM32746G-Discovery/stm32746g_discovery_audio.c \
+			BSP/STM32746G-Discovery/stm32746g_discovery_sd.c \
 			BSP/Components/wm8994/wm8994.c
 
 HAL_INCS += STM32F7xx_HAL_Driver/Inc 

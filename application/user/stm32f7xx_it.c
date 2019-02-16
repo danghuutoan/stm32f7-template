@@ -38,7 +38,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_it.h"
-#include "cmsis_os.h"
+// #include "cmsis_os.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -47,13 +47,17 @@ extern UART_HandleTypeDef UartHandle;
 extern SAI_HandleTypeDef haudio_out_sai;
 /* I2S handler declared in "stm32746g_discovery_audio.c" file */
 extern SAI_HandleTypeDef haudio_in_sai;
+extern SD_HandleTypeDef uSdHandle;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
 /*            Cortex-M7 Processor Exceptions Handlers                         */
 /******************************************************************************/
-
+void WWDG_IRQHandler (void)
+{
+  printf("WWDG_IRQHandler\r\n");
+}
 /**
   * @brief  This function handles NMI exception.
   * @param  None
@@ -70,6 +74,7 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
+  printf("%s:%d\r\n", __FUNCTION__, __LINE__);
   /* Go to infinite loop when Hard Fault exception occurs */
   while (1)
   {
@@ -182,5 +187,35 @@ void AUDIO_OUT_SAIx_DMAx_IRQHandler(void)
 void AUDIO_IN_SAIx_DMAx_IRQHandler(void)
 {
   HAL_DMA_IRQHandler(haudio_in_sai.hdmarx);
+}
+
+/**
+  * @brief  This function handles SDMMC1 global interrupt request.
+  * @param  None
+  * @retval None
+  */
+void BSP_SDMMC_IRQHandler(void)
+{
+  HAL_SD_IRQHandler(&uSdHandle);
+}
+
+/**
+* @brief  This function handles DMA2 Stream 6 interrupt request.
+* @param  None
+* @retval None
+*/
+void BSP_SDMMC_DMA_Tx_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(uSdHandle.hdmatx);
+}
+
+/**
+* @brief  This function handles DMA2 Stream 3 interrupt request.
+* @param  None
+* @retval None
+*/
+void BSP_SDMMC_DMA_Rx_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(uSdHandle.hdmarx);
 }
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

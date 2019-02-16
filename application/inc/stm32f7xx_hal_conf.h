@@ -48,7 +48,7 @@
 /**
   * @brief This is the list of modules to be used in the HAL driver 
   */
-#define HAL_MODULE_ENABLED  
+#define HAL_MODULE_ENABLED
 // #define HAL_ADC_MODULE_ENABLED  
 // #define HAL_CAN_MODULE_ENABLED
 /* #define HAL_CAN_LEGACY_MODULE_ENABLED */
@@ -58,7 +58,7 @@
 // #define HAL_DAC_MODULE_ENABLED  
 // #define HAL_DCMI_MODULE_ENABLED 
 #define HAL_DMA_MODULE_ENABLED
-// #define HAL_DMA2D_MODULE_ENABLED 
+#define HAL_DMA2D_MODULE_ENABLED 
 // #define HAL_ETH_MODULE_ENABLED 
 #define HAL_FLASH_MODULE_ENABLED 
 // #define HAL_NAND_MODULE_ENABLED
@@ -78,7 +78,7 @@
 // #define HAL_RNG_MODULE_ENABLED   
 // #define HAL_RTC_MODULE_ENABLED
 #define HAL_SAI_MODULE_ENABLED   
-// #define HAL_SD_MODULE_ENABLED  
+#define HAL_SD_MODULE_ENABLED  
 // #define HAL_SPDIFRX_MODULE_ENABLED
 // #define HAL_SPI_MODULE_ENABLED   
 #define HAL_TIM_MODULE_ENABLED   
@@ -399,7 +399,7 @@
 #ifdef HAL_HCD_MODULE_ENABLED
  #include "stm32f7xx_hal_hcd.h"
 #endif /* HAL_HCD_MODULE_ENABLED */
-   
+
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
 /**
