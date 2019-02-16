@@ -33,13 +33,8 @@ int main (void)
     log_init();
     printf("mplayer demo\r\n");
     storage_init();
-    // storage_open("STM32.TXT");
-    // uint32_t file_size = storage_get_size();
-    // printf("filesize %d\r\n", file_size);
-    // uint8_t read_buffer[100];
-    // storage_read(read_buffer, file_size);
-    // printf("data %.*s\r\n",file_size, read_buffer);
     music_player_init();
+    music_player_song_select("gardenss 48KHz.wav");
     music_player_play();
 
     while (1)
