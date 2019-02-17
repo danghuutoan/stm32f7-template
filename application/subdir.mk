@@ -6,7 +6,6 @@ APP_SRCS += $(APP_DIR)/user/system_stm32f7xx.c \
 			$(APP_DIR)/user/stm32f7xx_hal_msp.c \
 			$(APP_DIR)/user/main.c \
 			$(APP_DIR)/user/stm32f7xx_it.c \
-			$(APP_DIR)/user/audio_sample.c \
 			$(APP_DIR)/user/music_player.c \
 			$(APP_DIR)/user/log.c \
 			$(APP_DIR)/user/storage.c

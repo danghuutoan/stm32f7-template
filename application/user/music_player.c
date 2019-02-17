@@ -59,7 +59,10 @@ void music_player_process(void)
   }
 }
 
-
+void music_player_song_end(void)
+{
+  f_close(&wav_file);
+}
 /**
   * @brief  Calculates the remaining file size and new position of the pointer.
   * @param  None
